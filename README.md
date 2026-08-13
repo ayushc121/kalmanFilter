@@ -276,10 +276,8 @@ All regex patterns are pre-compiled, sensor state is held in a persistent dict i
 
 **Planned improvements:**
 - Making position and orientation tracking more robust during aggressive maneuvers.
-- Better separating acceleration from rotation — potentially through improved physical placement of the IMU on the platform.
+- Better separating acceleration from rotation — potentially through improved physical placement of the IMU on the breadboard.
 - Further noise reduction and drift mitigation, possibly through magnetometer fusion for yaw or tighter process noise tuning.
-- Improved ZUPT triggering logic (IMU-based stillness detection rather than relying on GPS speed alone).
-
 ---
 
 ## Project Structure
@@ -288,10 +286,14 @@ All regex patterns are pre-compiled, sensor state is held in a persistent dict i
 .
 ├── src/
 │   ├── main.cpp           # Main loop: IMU polling, GPS parsing, timing, telemetry
-│   ├── Kalman.cpp/.h      # 9-state linear Kalman filter (predict, GPS update, ZUPT)
-│   ├── Madgwick.cpp/.h    # Madgwick AHRS quaternion filter + GPS yaw correction
-│   ├── Calibration.cpp/.h # Startup gyro calibration + GPS reference averaging
-│   └── QuatFxns.cpp/.h    # Quaternion multiply and normalize utilities
-├── readingSerial.py       # Python live visualizer (3D orientation + position trace)
-└── platformio.ini         # PlatformIO build config for ESP32-S3
+│   ├── Kalman.cpp         # 9-state linear Kalman filter (predict, GPS update, ZUPT)
+│   ├── Madgwick.cpp       # Madgwick AHRS quaternion filter + GPS yaw correction
+│   ├── Calibration.cpp    # Startup gyro calibration + GPS reference averaging
+│   └── QuatFxns.cpp       # Quaternion multiply and normalize utilities
+├── include/
+│   ├── Kalman.cpp.h    
+│   ├── Madgwick.h 
+│   ├── Calibration.h 
+│   └── QuatFxns.h 
+└── readingSerial.py       # Python live visualizer (3D orientation + position trace)
 ```
