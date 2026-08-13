@@ -264,7 +264,6 @@ All regex patterns are pre-compiled, sensor state is held in a persistent dict i
 
 **Orientation tracking:** The Madgwick filter is responsive and accurate in pitch and roll with no observable drift. Yaw is the expected weak axis — without a magnetometer, the only yaw reference is integrated gyro rate (which drifts) and GPS course bearing (which is only valid above 2 m/s). At rest or low speed, slow yaw drift is present until meaningful GPS movement provides a correction. This is an inherent limitation of accelerometer+gyro-only AHRS.
 
-**Video:** https://youtu.be/3avw_fA6Kks
 ---
 
 ## Known Limitations & Next Steps
