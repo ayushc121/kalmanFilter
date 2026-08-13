@@ -43,7 +43,7 @@ After 60 seconds that's roughly **18 meters** — from noise alone, at rest. Thi
 
 ### Raw GPS: Low Update Rate and Noise Floor
 
-GPS provides absolute position but is slow and noisy. The GPS module used here updates at **4 Hz** with observed horizontal position scatter of **~12 meters** between consecutive stationary fixes in open sky. Altitude is significantly worse — errors of **±10 m or more** are typical, and the measurement noise was modeled conservatively with a 10 m standard deviation in the Kalman filter accordingly. GPS alone is far too coarse and slow for smooth real-time navigation.
+GPS provides absolute position but is slow and noisy. The NEO-6M GPS module used here updates at **4 Hz** with observed horizontal position scatter of **~12 meters** between consecutive stationary fixes in open sky. Altitude is significantly worse — errors of **±10 m or more** are typical, and the measurement noise was modeled conservatively with a 10 m standard deviation in the Kalman filter accordingly. GPS alone is far too coarse and slow for smooth real-time navigation.
 
 ### The Solution: Sensor Fusion
 
@@ -60,7 +60,7 @@ MPU6050 (100 Hz)
                                                                      rotate accel into world frame
                                                                                   │
                                                                                   ▼
-GPS (4 Hz)                                                              Kalman Filter (100 Hz predict)
+NEO-6M GPS (4 Hz)                                                              Kalman Filter (100 Hz predict)
   └─ Lat / Lon / Alt ────────────────────────────────────────────────► (4 Hz GPS update)
                                                                                   │
                                                                         State: [px, py, pz,
@@ -79,7 +79,7 @@ GPS (4 Hz)                                                              Kalman F
 |-----------|---------|
 | Microcontroller | ESP32-S3 |
 | IMU | MPU6050 (I2C addr `0x68`, SDA=14, SCL=4) |
-| GPS | u-blox module, 4 Hz, UART (RX=18, TX=17) |
+| GPS | NEO-6M, 4 Hz, UART (RX=18, TX=17) |
 | Toolchain | PlatformIO, Arduino framework |
 | IMU range | ±2g accelerometer (16384 LSB/g), ±250°/s gyro (131 LSB/°/s) |
 
@@ -264,6 +264,7 @@ All regex patterns are pre-compiled, sensor state is held in a persistent dict i
 
 **Orientation tracking:** The Madgwick filter is responsive and accurate in pitch and roll with no observable drift. Yaw is the expected weak axis — without a magnetometer, the only yaw reference is integrated gyro rate (which drifts) and GPS course bearing (which is only valid above 2 m/s). At rest or low speed, slow yaw drift is present until meaningful GPS movement provides a correction. This is an inherent limitation of accelerometer+gyro-only AHRS.
 
+**Video:** https://youtu.be/3avw_fA6Kks
 ---
 
 ## Known Limitations & Next Steps
