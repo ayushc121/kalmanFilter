@@ -39,11 +39,11 @@ An accelerometer measures specific force (gravity + linear acceleration). Subtra
 Δp = ½ · a · t² = ½ · (0.001 × 9.81) · 10² ≈ 0.49 m
 ```
 
-After 60 seconds that's roughly **18 meters** — from noise alone, at rest. In practice, raw double-integrated position is effectively useless without correction within a few seconds.
+After 60 seconds that's roughly **18 meters** — from noise alone, at rest. This was observed directly during development: raw double-integrated accelerometer output drifted to **~35 meters within seconds** while the board sat motionless on a table, before any GPS correction was applied. In practice, raw double-integrated position is effectively useless without correction within a few seconds.
 
 ### Raw GPS: Low Update Rate and Noise Floor
 
-GPS provides absolute position but is slow and noisy. A typical consumer GPS module (u-blox NEO series) updates at **1–4 Hz** with a **horizontal position noise floor of roughly 3–5 m (1σ)** in open sky conditions. Altitude is significantly worse — often **±10 m or more**. GPS alone is far too coarse and slow for smooth real-time navigation.
+GPS provides absolute position but is slow and noisy. The GPS module used here updates at **4 Hz** with observed horizontal position scatter of **~12 meters** between consecutive stationary fixes in open sky. Altitude is significantly worse — errors of **±10 m or more** are typical, and the measurement noise was modeled conservatively with a 10 m standard deviation in the Kalman filter accordingly. GPS alone is far too coarse and slow for smooth real-time navigation.
 
 ### The Solution: Sensor Fusion
 
@@ -55,17 +55,20 @@ The Madgwick filter uses the accelerometer to continuously correct gyro drift in
 
 ```
 MPU6050 (100 Hz)
-  ├─ Gyroscope (deg/s) ──────────────────────► Madgwick AHRS ──► Quaternion (w,x,y,z)
-  └─ Accelerometer (g)  ──────────────────────►      │                    │
-                                                      │            Rotation into
-GPS (4 Hz)                                            │            world frame
-  └─ Lat / Lon / Alt ───────────────────────────────────────────► Kalman Filter
-                                                                        │
-                                                              State: [px, py, pz,
-                                                                       vx, vy, vz,
-                                                                      bax, bay, baz]
-                                                                        │
-                                                             ENU Position Estimate
+  ├─ Gyroscope (deg/s) ──────────────────► Madgwick AHRS ──────────────► Quaternion (w,x,y,z)
+  └─ Accelerometer (g) ──────────────────►                                       │
+                                                                     rotate accel into world frame
+                                                                                  │
+                                                                                  ▼
+GPS (4 Hz)                                                              Kalman Filter (100 Hz predict)
+  └─ Lat / Lon / Alt ────────────────────────────────────────────────► (4 Hz GPS update)
+                                                                                  │
+                                                                        State: [px, py, pz,
+                                                                                vx, vy, vz,
+                                                                               bax, bay, baz]
+                                                                                  │
+                                                                                  ▼
+                                                                       ENU Position Estimate
 ```
 
 ---
@@ -242,7 +245,9 @@ A Python companion script reads structured serial telemetry from the ESP32 and r
 | `Acceleration Biases [X:... Y:... Z:...]` | Live Kalman bias estimates |
 | `GPS -> Lat:... Lon:... Alt:...` | Raw GPS fix |
 
-The visualization renders a **3D rectangular prism** whose orientation is driven live by the quaternion, giving an intuitive view of pitch/roll/yaw. A separate panel tracks the 2D position trace over time.
+The visualization renders a **single 3D view** containing both orientation and position simultaneously: a rectangular prism whose attitude is driven live by the quaternion (giving an intuitive view of pitch/roll/yaw), positioned at its Kalman-estimated ENU coordinates in 3D space so that both rotation and translation are visible in one scene.
+
+![Live visualizer](./visualizer.png)
 
 All regex patterns are pre-compiled, sensor state is held in a persistent dict initialized to `None`, and the serial thread is wrapped in `try/except` throughout to handle disconnect gracefully.
 
