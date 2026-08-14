@@ -255,14 +255,30 @@ All regex patterns are pre-compiled, sensor state is held in a persistent dict i
 
 ## Results
 
-**Position accuracy:** At rest for over 30 seconds, the Kalman filter holds position within **~1 meter** of the true location. This is achieved through a combination of:
-- Careful process noise tuning (`σ_a = 0.05 m/s²`) so the filter neither over- nor under-trusts the IMU.
-- Live accelerometer bias estimation in the Kalman state, which the GPS updates continuously correct.
-- Gyroscope bias removed at startup before it can accumulate into orientation error.
-- GPS Kalman updates gated on fix quality (HDOP < 2.0).
-- ZUPT applied during stationary periods to prevent velocity error from building.
+### Position Tracking
 
-**Orientation tracking:** The Madgwick filter is responsive and accurate in pitch and roll with no observable drift. Yaw is the expected weak axis — without a magnetometer, the only yaw reference is integrated gyro rate (which drifts) and GPS course bearing (which is only valid above 2 m/s). At rest or low speed, slow yaw drift is present until meaningful GPS movement provides a correction. This is an inherent limitation of accelerometer+gyro-only AHRS.
+When stationary, the Kalman estimate converges to within **~1 meter** of the starting position.
+
+**What the filter can and cannot track dynamically** is ultimately bounded by the noise floor of the sensors:
+
+- A 0.5 m hand movement happens in under a second — far too fast and small for GPS (12 m scatter) to register, and too small for IMU data to resolve cleanly above its noise floor.
+- The minimum displacement that GPS can meaningfully detect is roughly **5–10 meters**.
+- Movements at **10–50 m scale and above**, particularly at speeds above ~2 m/s where GPS course bearing becomes reliable for yaw correction, are where the full pipeline works as intended.
+
+In practice, this system is better used as a position tracker at high speeds rather than for precision. The IMU's primary contribution to position is bridging the 250 ms gaps between GPS ticks with physically plausible motion, and preventing the position estimate from jumping erratically between noisy fixes. It also allows the filter to hold a reasonable position estimate for a few seconds if GPS signal is briefly lost — though IMU-only dead reckoning degrades quickly beyond that.
+
+This is a hardware limitation, not a filter design limitation. The same Kalman architecture running on RTK GPS (which achieves 1–2 cm horizontal accuracy) would produce dramatically tighter dynamic tracking. On consumer GPS at this noise floor, the filter is doing what it can with the measurements available.
+
+This said, the system is genuinely useful for:
+
+- **Smooth trajectory logging** during walking, cycling, or driving — the IMU eliminates the jagged connect-the-dots appearance of raw GPS traces.
+- **Attitude and tilt monitoring** — pitch and roll from the Madgwick filter are solid and useful independent of the position pipeline.
+- **Short-gap dead reckoning** — maintaining a reasonable estimate across brief GPS outages (bridge underpasses, momentary obstructions).
+- **Motion detection and classification** — distinguishing stationary vs. moving, detecting turns, estimating heading during vehicle-speed travel.
+
+### Orientation Tracking
+
+The Madgwick filter is responsive and accurate in pitch and roll with no observable drift. Yaw is the expected weak axis — without a magnetometer, the only yaw reference is integrated gyro rate (which drifts) and GPS course bearing (which is only valid above 2 m/s). At rest or low speed, slow yaw drift is present until meaningful GPS movement provides a correction. This is an inherent limitation of accelerometer+gyro-only AHRS.
 
 ---
 
@@ -270,14 +286,17 @@ All regex patterns are pre-compiled, sensor state is held in a persistent dict i
 
 **Current limitations:**
 - Yaw drift during stationary or slow-speed operation due to absence of a magnetometer.
-- Aggressive maneuvers are challenging — large linear accelerations temporarily corrupt the Madgwick accelerometer correction (the adaptive beta mitigates but doesn't fully solve this).
+- Fast maneuvers are challenging due to accelerometer limits.
 - Separating linear acceleration from gravitational acceleration is fundamentally difficult with a single IMU; physical mounting position matters.
 - GPS altitude corrections are noisy (±10 m typical), limiting Z-axis accuracy.
+- Sub-10-meter dynamic position tracking is beyond what consumer GPS hardware at this noise floor can support.
 
 **Planned improvements:**
+- Better quality GPS and IMU chips.
 - Making position and orientation tracking more robust during aggressive maneuvers.
 - Better separating acceleration from rotation — potentially through improved physical placement of the IMU on the breadboard.
 - Further noise reduction and drift mitigation, possibly through magnetometer fusion for yaw or tighter process noise tuning.
+
 ---
 
 ## Project Structure
@@ -291,9 +310,9 @@ All regex patterns are pre-compiled, sensor state is held in a persistent dict i
 │   ├── Calibration.cpp    # Startup gyro calibration + GPS reference averaging
 │   └── QuatFxns.cpp       # Quaternion multiply and normalize utilities
 ├── include/
-│   ├── Kalman.cpp.h    
-│   ├── Madgwick.h 
-│   ├── Calibration.h 
-│   └── QuatFxns.h 
-└── readingSerial.py       # Python live visualizer (3D orientation + position trace)
+│   ├── Kalman.h
+│   ├── Madgwick.h
+│   ├── Calibration.h
+│   └── QuatFxns.h
+└── readingSerial.py       # Python live visualizer (3D orientation + position)
 ```
