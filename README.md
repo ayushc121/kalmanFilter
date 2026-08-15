@@ -295,6 +295,7 @@ Demonstration Video: [https://youtu.be/lAF7UrxtVgM](https://youtu.be/lAF7UrxtVgM
 
 **Planned improvements:**
 - Better quality GPS and IMU chips.
+- Magnetometer for reliable yaw orientation tracking.
 - Making position and orientation tracking more robust during aggressive maneuvers.
 - Better separating acceleration from rotation — potentially through improved physical placement of the IMU on the breadboard.
 - Further noise reduction and drift mitigation, possibly through magnetometer fusion for yaw or tighter process noise tuning.
