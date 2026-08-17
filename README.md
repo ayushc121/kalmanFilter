@@ -1,6 +1,6 @@
-# Inertial Navigation System — ESP32-S3 + MPU6050 + GPS
+# GPS-Aided Navigation System — ESP32-S3 + MPU6050 + GPS
 
-A from-scratch inertial navigation system built to gain hands-on experience with state estimation. The system fuses high-rate IMU data with low-rate GPS fixes to maintain real-time estimates of position, velocity, and orientation on an ESP32-S3 microcontroller. All filter algorithms — Madgwick AHRS and a 9-state linear Kalman filter — are implemented by hand in embedded C++, without any matrix libraries.
+A from-scratch GPS-Aided inertial navigation system built to gain hands-on experience with state estimation. The system fuses high-rate IMU data with low-rate GPS fixes to maintain real-time estimates of position, velocity, and orientation on an ESP32-S3 microcontroller. All filter algorithms — Madgwick AHRS and a 9-state linear Kalman filter — are implemented by hand in embedded C++, without any matrix libraries.
 
 ---
 
